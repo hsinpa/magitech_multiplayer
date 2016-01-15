@@ -1,0 +1,60 @@
+<h1>{{ title }}</h1>
+
+<button name="findRoom">Find Rooms</button>
+
+<hr>
+<form>
+<h5>Emit Message</h5>
+<input type="number" name="score" placeholder="Score">
+<input type="number" name="cubeHeight" placeholder="Cube Height">
+<input type="submit" value="Submit">
+</form>
+
+<script>
+
+//Socket IO (On Event)
+var socket = io.connect('http://localhost:3000');
+
+  socket.on('prepareGame', function () {
+  	console.log("Start");
+  	socket.emit('gameStart');
+  });
+
+
+
+(function($, socket) {
+
+
+	//UI Event
+	$("form").submit(function(event){
+		event.preventDefault();
+		socket.emit('updateStatus', {score : $("form input[name='score']").val(),
+		 							              heightIndex : $("form input[name='cubeHeight']").val(),
+                                name : "Paul2",
+                                facebook_id : "1546408082263449",
+                                overAllScore : "200"});
+	});
+
+	//SearchRoom
+	$("button[name='findRoom']").click(function() {
+    	socket.emit('findRoom');
+	});
+
+	//Find Friend
+	$("button[name='findFriend']").click(function() {
+  		socket.emit('findOnlineFriends', { friends: "[{'name':'Paul TRUE','id':'10201909950388897'}]" });
+	});
+
+  //Invite Friend
+  $("button[name='inviteFriend']").click(function() {
+      socket.emit('inviteFriend', {id : '1546408082263449', name: 'Paul2', invite_id:'10201909950388897' });
+  });
+
+     function Init() {
+     	socket.emit('loginInfo', {id:"1546408082263449",first_name:"Paul2",
+    	friends: "[{'name':'Paul TRUE','id':'10201909950388897'}]" });
+     }
+
+     Init();
+})(jQuery,socket);
+</script>
