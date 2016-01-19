@@ -16,13 +16,12 @@ exports.listen = function(app) {
 
     //When User Connect to Socket.IO
   	socket.on('loginInfo', function (data) {
-
+        data = JSON.parse(data);
         env.allUser[socket.id] = {
           "_id" : data.id,
           "socket_id" : socket.id,
           "name" : data.name
         };
-
   	});
 
     socket.on('findRoom', function (data) {
@@ -51,9 +50,15 @@ exports.listen = function(app) {
     socket.on('disconnect', function () {
       console.log("disconnect");
   		var user = env.allUser[socket.id];
-			delete env.allUser[socket.id];
-			env.allRooms.splice(user.room_index, 1);
-			roomManager.leaveRoom(user.room_id, socket);
+      console.log(user);
+      if ("room_index" in user && env.allRooms.length > user.room_index &&
+         (env.allRooms[user.room_index][0] == user.room_id )) {
+          env.allRooms.splice(user.room_index, 1);
+          roomManager.leaveRoom(user.room_id, socket);
+      }
+
+      delete env.allUser[socket.id];
     });
+
   });
 }
