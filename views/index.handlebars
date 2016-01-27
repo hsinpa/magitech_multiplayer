@@ -15,12 +15,15 @@
 //Socket IO (On Event)
 var socket = io.connect('http://localhost:3000');
 
-  socket.on('prepareGame', function () {
-  	console.log("Start");
-  	socket.emit('gameStart');
+  socket.on('prepareGame', function (data) {
+  	console.log(data);
+  	socket.emit('startBattle');
   });
 
-
+  socket.on('askUserInfo', function (data) {
+  	console.log(data);
+    socket.emit('loginInfo', JSON.stringify({id:"1546408082263449",name:"Paul2" }) );
+  });
 
 (function($, socket) {
 
@@ -37,24 +40,8 @@ var socket = io.connect('http://localhost:3000');
 
 	//SearchRoom
 	$("button[name='findRoom']").click(function() {
-    	socket.emit('findRoom');
+      var data = { id: '1546408082263449', hero: 'Producer' };
+    	socket.emit('findRoom', JSON.stringify(data) );
 	});
-
-	//Find Friend
-	$("button[name='findFriend']").click(function() {
-  		socket.emit('findOnlineFriends', { friends: "[{'name':'Paul TRUE','id':'10201909950388897'}]" });
-	});
-
-  //Invite Friend
-  $("button[name='inviteFriend']").click(function() {
-      socket.emit('inviteFriend', {id : '1546408082263449', name: 'Paul2', invite_id:'10201909950388897' });
-  });
-
-     function Init() {
-     	socket.emit('loginInfo', {id:"1546408082263449",first_name:"Paul2",
-    	friends: "[{'name':'Paul TRUE','id':'10201909950388897'}]" });
-     }
-
-     Init();
 })(jQuery,socket);
 </script>
