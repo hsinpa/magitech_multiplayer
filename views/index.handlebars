@@ -3,44 +3,96 @@
 <button name="findRoom">Find Rooms</button>
 
 <hr>
-<form>
 <h5>Emit Message</h5>
-<input type="number" name="score" placeholder="Score">
-<input type="number" name="cubeHeight" placeholder="Cube Height">
+<form id="sale">
+<h5>Sale</h3>
+  <select name="item">
+    <option value="Boot" selected>Boot</option>
+    <option value="Tunic">Tunic</option>
+    <option value="Hood">Hood</option>
+
+  </select>
+<input type="number" name="price" placeholder="Price">
 <input type="submit" value="Submit">
 </form>
+<hr />
+
+<form id="inventory">
+<h3>Inventory FLow</h3>
+<select name="item">
+  <option value="Boot" selected>Boot</option>
+  <option value="Tunic">Tunic</option>
+  <option value="Hood">Hood</option>
+</select>
+<input type="number" name="quantity" placeholder="Quantity">
+<input type="submit" value="Submit">
+</form>
+<hr />
+
+<button id="endturn">End Turn</button>
+<hr />
 
 <script>
 
 //Socket IO (On Event)
-var socket = io.connect('http://localhost:3000');
+var socket = io.connect('http://localhost:3000'),
+    guid = "546408082263449fff", name = "hsinpaDev";
 
   socket.on('prepareGame', function (data) {
-  	console.log(data);
   	socket.emit('startBattle');
   });
 
   socket.on('askUserInfo', function (data) {
+    socket.emit('loginInfo', JSON.stringify({id:guid, name:name }) );
+  });
+
+  socket.on('OnSaleSpellUpdate', function (data) {
   	console.log(data);
-    socket.emit('loginInfo', JSON.stringify({id:"1546408082263449",name:"Paul2" }) );
   });
 
 (function($, socket) {
 
 
 	//UI Event
-	$("form").submit(function(event){
+	$("#sale").submit(function(event){
 		event.preventDefault();
-		socket.emit('updateStatus', {score : $("form input[name='score']").val(),
-		 							              heightIndex : $("form input[name='cubeHeight']").val(),
-                                name : "Paul2",
-                                facebook_id : "1546408082263449",
-                                overAllScore : "200"});
+
+		socket.emit('SaleSpellCasting',
+    JSON.stringify({player_guid : guid,
+      actionType : 1,
+      item_name : $("#sale select[name='item']").val(),
+      quantity : 2,
+      price : parseInt($("#sale input[name='price']").val()),
+      revenue : 323,
+      round : 1,
+      coin : 400,
+      mana : 0,
+      preference : "Like",
+      segment_index : 0}) );
 	});
+
+  $("#inventory").submit(function(event){
+    event.preventDefault();
+    socket.emit('InventoryUpdate', JSON.stringify({player_guid : guid,
+                                itemType : "Product",
+                                product : $("#sale select[name='item']").val(),
+                                quantity : 2,
+                                coin : 200}) );
+  });
+
+  //ENDTURN
+  $("#endturn").click(function() {
+      socket.emit('EndTurn',
+      JSON.stringify({player_guid : guid,
+        round : 1,
+        coin : 400,
+        mana : 0 }));
+  });
+
 
 	//SearchRoom
 	$("button[name='findRoom']").click(function() {
-      var data = { id: '1546408082263449', hero: 'Producer' };
+      var data = { id: guid, hero: 'Producer' };
     	socket.emit('findRoom', JSON.stringify(data) );
 	});
 })(jQuery,socket);

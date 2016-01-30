@@ -9,10 +9,10 @@ var socket = require('socket.io'),
 	};
 
 exports.listen = function(app) {
-  io = socket.listen(app);
+  var gameManager = new GameManager(), io = socket.listen(app);
+
   io.sockets.on('connection', function (socket) {
     console.log("connect");
-    var gameManager = new GameManager(socket);
     roomManager.env = env;
     //Send back basic server info when user first connected
     socket.emit("askUserInfo",  { socket_id: socket.id, onlineNum : Object.keys(env.allUser).length + 1 });
@@ -27,20 +27,21 @@ exports.listen = function(app) {
         };
   	});
 
-    //Start Game after Room Matching complete
-    socket.on('startBattle', function (data) {
-        gameManager.listen();
-    });
-
-
     //When client discconected
     socket.on('disconnect', function () {
       console.log("disconnect");
       var user = env.allUser[socket.id];
-      if ("room_index" in user && env.allRooms.length > user.room_index &&
-         (env.allRooms[user.room_index][0] == user.room_id )) {
-          env.allRooms.splice(user.room_index, 1);
-          roomManager.leaveRoom(user.room_id, socket);
+
+      //If roomIndex exist && make sure allRoom will not out of array
+      if (user && user.room_index !== undefined && env.allRooms.length > user.room_index) {
+        //if room still exist in allRoom
+          if (env.allRooms[user.room_index][0] == user.room_id ) {
+            console.log("Remove Room");
+            env.allRooms.splice(user.room_index, 1);
+          } else {
+            //if game start, then let's opponent leave the game
+            roomManager.leaveRoom(user.room_id, socket);
+          }
       }
 
       delete env.allUser[socket.id];
@@ -48,7 +49,7 @@ exports.listen = function(app) {
 
     //=========================== Menu Click Event ==========================
     socket.on('findRoom', function (data) {
-      var villagerNum = 5;
+      var villagerNum = 40;
       data = JSON.parse(data);
       console.log(data);
       env.allUser[socket.id].hero = data.hero;
@@ -59,6 +60,7 @@ exports.listen = function(app) {
           socket.join(resultArray[0]);
           env.allUser[socket.id].room_id = resultArray[0];
           env.allUser[socket.id].room_index = resultArray[1];
+          gameManager.startListening(socket, env.allUser, io);
           //Start Battle when player2 and villagerInfo arrive
           if (resultArray[2] === "opponent") {
 
@@ -77,8 +79,8 @@ exports.listen = function(app) {
                 }
               );
 
-              socket.emit("prepareGame", sendInfo);
-              socket.to(resultArray[0]).emit('prepareGame', sendInfo);
+              //socket.emit("prepareGame", sendInfo);
+              io.in(resultArray[0]).emit('prepareGame', sendInfo);
               env.allRooms.splice(resultArray[1], 1);
             });
           }
