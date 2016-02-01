@@ -14,18 +14,13 @@ exports.listen = function(app) {
   io.sockets.on('connection', function (socket) {
     console.log("connect");
     roomManager.env = env;
-    //Send back basic server info when user first connected
-    socket.emit("askUserInfo",  { socket_id: socket.id, onlineNum : Object.keys(env.allUser).length + 1 });
+    env.allUser[socket.id] = {"socket_id" : socket.id};
 
-    //User's basic info
-  	socket.on('loginInfo', function (data) {
-        data = JSON.parse(data);
-        env.allUser[socket.id] = {
-          "_id" : data.id,
-          "socket_id" : socket.id,
-          "name" : data.name
-        };
-  	});
+    //Send back basic server info when user first connected
+    socket.emit("OnConnect", JSON.stringify({
+       socket_id: socket.id,
+       onlineNum : Object.keys(env.allUser).length + 1 })
+     );
 
     //When client discconected
     socket.on('disconnect', function () {
@@ -51,8 +46,10 @@ exports.listen = function(app) {
     socket.on('findRoom', function (data) {
       var villagerNum = 40;
       data = JSON.parse(data);
-      console.log(data);
+      
       env.allUser[socket.id].hero = data.hero;
+      env.allUser[socket.id]._id = data.id;
+      env.allUser[socket.id].name = data.name;
 
       roomManager.findRoom(env.allUser[socket.id], function(isValid, resultArray) {
         //0=roomID, 1=room_index, 2=status
