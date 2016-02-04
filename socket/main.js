@@ -13,7 +13,10 @@ exports.listen = function(app) {
 
   io.sockets.on('connection', function (socket) {
     console.log("connect");
+    console.log(env.allUser);
+
     roomManager.env = env;
+    //Store socket id to userBase
     env.allUser[socket.id] = {"socket_id" : socket.id};
 
     //Send back basic server info when user first connected
@@ -25,13 +28,13 @@ exports.listen = function(app) {
     //When client discconected
     socket.on('disconnect', function () {
       console.log("disconnect");
+
       var user = env.allUser[socket.id];
 
       //If roomIndex exist && make sure allRoom will not out of array
       if (user && user.room_index !== undefined && env.allRooms.length > user.room_index) {
         //if room still exist in allRoom
-          if (env.allRooms[user.room_index][0] == user.room_id ) {
-            console.log("Remove Room");
+          if (env.allRooms[user.room_index].room_id == user.room_id ) {
             env.allRooms.splice(user.room_index, 1);
           } else {
             //if game start, then let's opponent leave the game
@@ -44,13 +47,14 @@ exports.listen = function(app) {
 
     //=========================== Menu Click Event ==========================
     socket.on('findRoom', function (data) {
-      var villagerNum = 40;
+      var villagerNum = 60;
       data = JSON.parse(data);
-      
+      //Store user data
       env.allUser[socket.id].hero = data.hero;
       env.allUser[socket.id]._id = data.id;
       env.allUser[socket.id].name = data.name;
 
+      //Call find room method
       roomManager.findRoom(env.allUser[socket.id], function(isValid, resultArray) {
         //0=roomID, 1=room_index, 2=status
         if (isValid) {
@@ -62,6 +66,7 @@ exports.listen = function(app) {
           if (resultArray[2] === "opponent") {
 
             utility.GetCustomerSimulateData(villagerNum, function(data) {
+              //Decide who start first
               var diceResult = utility.RollDice();
               console.log("Matching Complete");
 
